@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat - AI Teacher Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% block head %}
+    <style>
+        body {
+            background: url('/static/bg.jpg') center center no-repeat fixed;
+            background-size: cover;
+        }
+        .chat-box {
+            background: rgba(255,255,255,0.98);
+            border-radius: 22px;
+            box-shadow: 0 12px 40px 0 rgba(31,38,135,0.22);
+            border: 2px solid #fda085;
+            padding: 2.5em 2em 2em 2em;
+            margin: 2em auto;
+            color: #222 !important;
+            max-width: 600px;
+            position: relative;
+            z-index: 1;
+        }
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #222;
+            text-align: center;
+            margin-bottom: 0.5em;
+            letter-spacing: 1px;
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            color: #444;
+            text-align: center;
+            margin-bottom: 1.5em;
+        }
+        .msg-human {
+            background: linear-gradient(90deg, #f6d365 0%, #fda085 100%);
+            border-radius: 15px;
+            padding: 1em 1.2em;
+            margin-bottom: 1em;
+            text-align: left;
+            box-shadow: 0 2px 8px rgba(246, 211, 101, 0.2);
+        }
+        .msg-ai {
+            background: linear-gradient(90deg, #ffe5d0 0%, #ffd5b8 100%);
+            border-radius: 15px;
+            padding: 1em 1.2em;
+            margin-bottom: 1em;
+            text-align: left;
+            box-shadow: 0 2px 8px rgba(255, 229, 208, 0.3);
+        }
+        .history-box {
+            max-height: 350px;
+            overflow-y: auto;
+            margin-bottom: 1em;
+            padding: 1em;
+            scrollbar-width: thin;
+            scrollbar-color: #fda085 #ffe5d0;
+        }
+        .history-box::-webkit-scrollbar {
+            width: 8px;
+        }
+        .history-box::-webkit-scrollbar-track {
+            background: #ffe5d0;
+            border-radius: 10px;
+        }
+        .history-box::-webkit-scrollbar-thumb {
+            background: #fda085;
+            border-radius: 10px;
+        }
+    </style>
+    {% endblock %}
+</head>
+<body>
+    {% block mode_status %}
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-3 px-3" style="max-width:600px; margin:0 auto;">
+            <div class="d-flex align-items-center gap-3">
+                <form method="post" style="display:inline;">
+                    <input type="hidden" name="toggle_mode" value="1">
+                    <button type="submit" class="btn {{ 'btn-success' if protege_mode else 'btn-outline-secondary' }} shadow-sm" style="min-width: 140px;">
+                        {{ 'Protégé Mode ON' if protege_mode else 'Protégé Mode OFF' }}
+                    </button>
+                </form>
+                {% if protege_mode %}
+                    <span class="badge bg-info text-dark">Active</span>
+                {% endif %}
+            </div>
+            <div class="points-badge">
+                <span class="badge bg-primary fs-6 shadow-sm">🏆 {{ points }} Points</span>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+    <div class="chat-box">
+        <div class="main-title">🤖 AI Teacher Assistant</div>
+        <div class="subtitle">Your personalized study companion</div>
+        <div class="alert alert-info mb-4 shadow-sm" style="background: linear-gradient(90deg, #ffe5d0 0%, #ffd5b8 100%); border: none;">
+            <div class="d-flex align-items-center gap-2">
+                <span style="font-size: 1.5em;">👋</span>
+                <div>
+                    <strong>Welcome, {{ user_name }}!</strong><br>
+                    <span class="text-muted">You are a <b>{{ learning_style }}</b> learner</span>
+                </div>
+            </div>
+        </div>
+        <form method="post" class="mb-4">
+            <div class="input-group input-group-lg shadow-sm">
+                <input type="text" class="form-control border-2" name="user_query" 
+                    placeholder="Ask any study-related question or explain a topic..." 
+                    style="border-color: #fda08544; border-radius: 12px 0 0 12px;" required>
+                <button class="btn btn-warning px-4" type="submit" 
+                    style="border-radius: 0 12px 12px 0; font-weight: 600;">
+                    {{ '🎓 Explain' if protege_mode else '❓ Ask' }}
+                </button>
+            </div>
+        </form>
+        {% if ai_response %}
+            <div class="msg-ai">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span><b>🤖 Assistant</b></span>
+                    <small class="text-muted">Just now</small>
+                </div>
+                <div>{{ ai_response }}</div>
+            </div>
+        {% endif %}
+        <div class="accordion" id="historyAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingHistory">
+                    <button class="accordion-button collapsed shadow-sm" type="button" 
+                        data-bs-toggle="collapse" data-bs-target="#collapseHistory" 
+                        aria-expanded="false" aria-controls="collapseHistory"
+                        style="border-radius: 12px; background: linear-gradient(90deg, #fff7f0 0%, #ffe5d0 100%);">
+                        <div class="d-flex align-items-center gap-2">
+                            <span style="font-size: 1.2em;">🗂️</span>
+                            <span style="font-weight: 600;">Conversation History</span>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapseHistory" class="accordion-collapse collapse" aria-labelledby="headingHistory" data-bs-parent="#historyAccordion">
+                    <div class="accordion-body history-box">
+                        {% for entry in conversation_history %}
+                            {% if entry.role == "Human" %}
+                                <div class="msg-human">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span><b>🧑 You</b></span>
+                                        <small class="text-muted">{{ entry.time }}</small>
+                                    </div>
+                                    <div>{{ entry.text }}</div>
+                                </div>
+                            {% else %}
+                                <div class="msg-ai">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span><b>🤖 Assistant</b></span>
+                                        <small class="text-muted">{{ entry.time }}</small>
+                                    </div>
+                                    <div>{{ entry.text }}</div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 text-center">
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

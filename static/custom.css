@@ -1,0 +1,39 @@
+/* Custom styles for AI Teacher Assistant */
+body, html {
+    font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+}
+.main-card input[type="text"], .main-card input[type="password"] {
+    font-size: 1.1em;
+    border-radius: 8px;
+    border: 1.5px solid #fda085;
+    background: #fff;
+    color: #222;
+    padding: 0.5em 1em;
+}
+.btn-warning, .btn-success, .btn-primary {
+    font-weight: bold;
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 2px 8px 0 rgba(31,38,135,0.10);
+}
+.btn-warning {
+    background: linear-gradient(90deg, #f6d365 0%, #fda085 100%);
+    color: #222;
+}
+.btn-success {
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+    color: #222;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+}
+.alert-info {
+    background: #ffe5d0;
+    color: #222;
+    border-radius: 10px;
+    border: none;
+}
+hr {
+    border-top: 1.5px solid #fda08544;
+}
